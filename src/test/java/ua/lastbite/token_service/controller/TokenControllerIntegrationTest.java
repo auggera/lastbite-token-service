@@ -193,7 +193,7 @@ public class TokenControllerIntegrationTest {
         mockMvc.perform(post("/api/tokens/validate")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(tokenValidationRequest)))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isConflict())
                 .andExpect(content().string("Token has already been used: " + tokenValidationRequest.getTokenValue()));
     }
 
@@ -205,7 +205,7 @@ public class TokenControllerIntegrationTest {
         mockMvc.perform(post("/api/tokens/validate")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(tokenValidationRequest)))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isGone())
                 .andExpect(content().string("Token has expired: " + tokenValidationRequest.getTokenValue()));
     }
 
