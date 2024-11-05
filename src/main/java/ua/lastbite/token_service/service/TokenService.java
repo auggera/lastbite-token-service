@@ -7,6 +7,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import ua.lastbite.token_service.config.TokenConfig;
 import ua.lastbite.token_service.dto.token.TokenRequest;
+import ua.lastbite.token_service.dto.token.TokenResponse;
 import ua.lastbite.token_service.dto.token.TokenValidationRequest;
 import ua.lastbite.token_service.dto.token.TokenValidationResponse;
 import ua.lastbite.token_service.exception.TokenAlreadyUsedException;
@@ -37,7 +38,7 @@ public class TokenService {
         this.tokenConfig = tokenConfig;
     }
 
-    public String generateToken(TokenRequest request) {
+    public TokenResponse generateToken(TokenRequest request) {
         LOGGER.info("Generating token for user ID: {}", request.getUserId());
 
         Token token = tokenMapper.toEntity(request, tokenConfig.getTokenExpirationTime());
@@ -47,7 +48,8 @@ public class TokenService {
         LOGGER.info("Token successfully generated for user ID: {}", request.getUserId());
         tokenRepository.save(token);
         LOGGER.info("Token saved");
-        return tokenValue;
+
+        return new TokenResponse(tokenValue);
     }
 
     private String generateTokenValue(Integer userId) {

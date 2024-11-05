@@ -11,6 +11,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import ua.lastbite.token_service.config.TokenConfig;
 import ua.lastbite.token_service.dto.token.TokenRequest;
+import ua.lastbite.token_service.dto.token.TokenResponse;
 import ua.lastbite.token_service.dto.token.TokenValidationRequest;
 import ua.lastbite.token_service.dto.token.TokenValidationResponse;
 import ua.lastbite.token_service.exception.TokenAlreadyUsedException;
@@ -65,10 +66,11 @@ public class TokenServiceTest {
 
         Mockito.when(tokenRepository.save(any(Token.class))).thenReturn(token);
 
-        String tokenValue = tokenService.generateToken(tokenRequest);
-        System.out.println(tokenValue);
+        TokenResponse response = tokenService.generateToken(tokenRequest);
+        System.out.println(response.getTokenValue());
 
-        assertNotNull(tokenValue);
+        assertNotNull(response);
+        assertNotNull(response.getTokenValue());
         assertTrue(token.getExpiresAt().isAfter(LocalDateTime.now()));
 
         Mockito.verify(tokenRepository, Mockito.times(1)).save(token);
@@ -83,12 +85,14 @@ public class TokenServiceTest {
 
         Mockito.when(tokenRepository.save(any(Token.class))).thenReturn(token);
 
-        String tokenValue1 = tokenService.generateToken(tokenRequest);
-        String tokenValue2 = tokenService.generateToken(tokenRequest);
+        TokenResponse response1 = tokenService.generateToken(tokenRequest);
+        TokenResponse response2 = tokenService.generateToken(tokenRequest);
 
-        assertNotNull(tokenValue1);
-        assertNotNull(tokenValue2);
-        assertNotEquals(tokenValue1, tokenValue2);
+        assertNotNull(response1);
+        assertNotNull(response2);
+        assertNotNull(response1.getTokenValue());
+        assertNotNull(response2.getTokenValue());
+        assertNotEquals(response1, response2);
     }
 
     @Test
