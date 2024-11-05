@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ua.lastbite.token_service.dto.token.TokenRequest;
+import ua.lastbite.token_service.dto.token.TokenResponse;
 import ua.lastbite.token_service.dto.token.TokenValidationRequest;
 import ua.lastbite.token_service.dto.token.TokenValidationResponse;
 import ua.lastbite.token_service.service.TokenService;
@@ -25,11 +26,11 @@ public class TokenController {
     private static final Logger LOGGER = LoggerFactory.getLogger(TokenController.class);
 
     @PostMapping("/generate")
-    public ResponseEntity<String> generateToken(@Valid @RequestBody TokenRequest request) {
+    public ResponseEntity<TokenResponse> generateToken(@Valid @RequestBody TokenRequest request) {
         LOGGER.info("Received request to generate token for user ID: {}", request.getUserId());
-        String tokenValue = tokenService.generateToken(request);
+        TokenResponse tokenResponse = tokenService.generateToken(request);
         LOGGER.info("Token successfully generated for user ID: {}", request.getUserId());
-        return ResponseEntity.ok(tokenValue);
+        return ResponseEntity.ok(tokenResponse);
     }
 
     @PostMapping("/validate")

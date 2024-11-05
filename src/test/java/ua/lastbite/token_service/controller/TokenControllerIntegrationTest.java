@@ -4,13 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import org.mockito.Mockito;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
@@ -18,15 +14,13 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import org.springframework.test.web.servlet.MvcResult;
 import ua.lastbite.token_service.dto.token.TokenRequest;
+import ua.lastbite.token_service.dto.token.TokenResponse;
 import ua.lastbite.token_service.dto.token.TokenValidationRequest;
 import ua.lastbite.token_service.dto.user.UserDto;
 import ua.lastbite.token_service.dto.user.UserRole;
-import ua.lastbite.token_service.exception.ServiceUnavailableException;
 import ua.lastbite.token_service.exception.TokenNotFoundException;
-import ua.lastbite.token_service.exception.UserNotFoundException;
 import ua.lastbite.token_service.model.Token;
 import ua.lastbite.token_service.repository.TokenRepository;
-import ua.lastbite.token_service.service.TokenService;
 
 import java.time.LocalDateTime;
 
@@ -39,13 +33,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 public class TokenControllerIntegrationTest {
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(TokenControllerIntegrationTest.class);
-
     @Autowired
     private MockMvc mockMvc;
-
-    @Autowired
-    private TokenService tokenService;
 
     @Autowired
     private TokenRepository tokenRepository;
@@ -59,7 +48,6 @@ public class TokenControllerIntegrationTest {
     private TokenRequest tokenRequest;
     private TokenValidationRequest tokenValidationRequest;
     private Token existingToken;
-    private UserDto userDto;
 
     @BeforeEach
     void setUpRequest() {
@@ -67,7 +55,7 @@ public class TokenControllerIntegrationTest {
 
         tokenValidationRequest = new TokenValidationRequest("validToken123");
 
-        userDto = new UserDto();
+        UserDto userDto = new UserDto();
         userDto.setId(1);
         userDto.setFirstName("John");
         userDto.setLastName("Doe");
@@ -84,12 +72,13 @@ public class TokenControllerIntegrationTest {
     void testGenerateTokenSuccessfully() throws Exception {
 
         MvcResult result = mockMvc.perform(post("/api/tokens/generate")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(tokenRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(tokenRequest)))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tokenValue").exists()) // Проверка на наличие поля tokenValue
                 .andReturn();
 
-        String newTokenValue = result.getResponse().getContentAsString();
+        String newTokenValue = objectMapper.readValue(result.getResponse().getContentAsString(), TokenResponse.class).getTokenValue();
 
         Token savedToken = tokenRepository.findByTokenValue(newTokenValue)
                 .orElseThrow(() -> new TokenNotFoundException(newTokenValue));
@@ -102,13 +91,14 @@ public class TokenControllerIntegrationTest {
         assertTrue(savedToken.getExpiresAt().isAfter(savedToken.getCreatedAt()));
     }
 
+
     @Test
     void testGenerateTokenUserIdIsNull() throws Exception {
         tokenRequest.setUserId(null);
 
         mockMvc.perform(post("/api/tokens/generate")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(tokenRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(tokenRequest)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.userId").value("User ID cannot be empty"));
     }
@@ -118,8 +108,8 @@ public class TokenControllerIntegrationTest {
         tokenRequest = null;
 
         mockMvc.perform(post("/api/tokens/generate")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(tokenRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(tokenRequest)))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("Request body is missing or invalid"));
     }
@@ -139,8 +129,8 @@ public class TokenControllerIntegrationTest {
         tokenRepository.save(existingToken);
 
         mockMvc.perform(post("/api/tokens/validate")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(tokenValidationRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(tokenValidationRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.valid").value(true))
                 .andExpect(jsonPath("$.userId").value(1));
@@ -149,8 +139,8 @@ public class TokenControllerIntegrationTest {
     @Test
     void testValidateTokenNotFound() throws Exception {
         mockMvc.perform(post("/api/tokens/validate")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(tokenValidationRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(tokenValidationRequest)))
                 .andExpect(status().isNotFound())
                 .andExpect(content().string("Token not found: " + tokenValidationRequest.getTokenValue()));
     }
@@ -161,8 +151,8 @@ public class TokenControllerIntegrationTest {
         tokenRepository.save(existingToken);
 
         mockMvc.perform(post("/api/tokens/validate")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(tokenValidationRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(tokenValidationRequest)))
                 .andExpect(status().isConflict())
                 .andExpect(content().string("Token has already been used: " + tokenValidationRequest.getTokenValue()));
     }
@@ -184,8 +174,8 @@ public class TokenControllerIntegrationTest {
         tokenValidationRequest.setTokenValue(null);
 
         mockMvc.perform(post("/api/tokens/validate")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(tokenValidationRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(tokenValidationRequest)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.tokenValue").value("Token cannot be empty"));
     }
@@ -195,8 +185,8 @@ public class TokenControllerIntegrationTest {
         tokenValidationRequest = null;
 
         mockMvc.perform(post("/api/tokens/validate")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(tokenValidationRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(tokenValidationRequest)))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("Request body is missing or invalid"));
     }
@@ -206,8 +196,8 @@ public class TokenControllerIntegrationTest {
         tokenValidationRequest.setTokenValue("short");
 
         mockMvc.perform(post("/api/tokens/validate")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(tokenValidationRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(tokenValidationRequest)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.tokenValue").value("Token length must be between 10 and 100 characters"));
     }

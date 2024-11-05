@@ -16,13 +16,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import ua.lastbite.token_service.dto.token.TokenRequest;
+import ua.lastbite.token_service.dto.token.TokenResponse;
 import ua.lastbite.token_service.dto.token.TokenValidationRequest;
 import ua.lastbite.token_service.dto.token.TokenValidationResponse;
 import ua.lastbite.token_service.exception.TokenAlreadyUsedException;
 import ua.lastbite.token_service.exception.TokenExpiredException;
 import ua.lastbite.token_service.exception.TokenNotFoundException;
 import ua.lastbite.token_service.model.Token;
-import ua.lastbite.token_service.repository.TokenRepository;
 import ua.lastbite.token_service.service.TokenService;
 
 import java.time.LocalDateTime;
@@ -45,22 +45,21 @@ public class TokenControllerTest {
     @MockBean
     private TokenService tokenService;
 
-    @Autowired
-    private TokenRepository tokenRepository;
-
-    TokenRequest tokenRequest;
-    TokenValidationRequest tokenValidationRequest;
-    TokenValidationResponse tokenValidationResponse;
-    Token token;
+    private static final String TOKEN_VALUE = "tokenValue";
+    private TokenRequest tokenRequest;
+    private TokenValidationRequest tokenValidationRequest;
+    private TokenValidationResponse tokenValidationResponse;
+    private TokenResponse tokenResponse;
 
     @BeforeEach
     void setUp() {
         tokenRequest = new TokenRequest(1);
         tokenValidationResponse = new TokenValidationResponse(true, 1);
-        tokenValidationRequest = new TokenValidationRequest("tokenValue");
+        tokenValidationRequest = new TokenValidationRequest(TOKEN_VALUE);
+        tokenResponse = new TokenResponse(TOKEN_VALUE);
 
-        token = new Token();
-        token.setTokenValue("tokenValue");
+        Token token = new Token();
+        token.setTokenValue(TOKEN_VALUE);
         token.setUserId(1);
         token.setCreatedAt(LocalDateTime.now());
         token.setExpiresAt(LocalDateTime.now().plusSeconds(86400L));
@@ -71,7 +70,7 @@ public class TokenControllerTest {
     void testGenerateTokenSuccessfully() throws Exception {
 
         Mockito.when(tokenService.generateToken(tokenRequest))
-                .thenReturn("TokenSample");
+                .thenReturn(tokenResponse);
 
         MvcResult result = mockMvc.perform(post("/api/tokens/generate")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -81,8 +80,7 @@ public class TokenControllerTest {
                 .andExpect(content().string(Matchers.not("")))
                 .andReturn();
 
-        String responseContent = result.getResponse().getContentAsString();
-        assertEquals("TokenSample", responseContent);
+        assertTrue(result.getResponse().getContentAsString().contains(TOKEN_VALUE));
     }
 
     @Test
