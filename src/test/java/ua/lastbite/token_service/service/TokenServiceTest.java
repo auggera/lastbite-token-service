@@ -7,18 +7,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import org.springframework.test.context.ActiveProfiles;
 
 import ua.lastbite.token_service.config.TokenConfig;
 import ua.lastbite.token_service.dto.token.TokenRequest;
 import ua.lastbite.token_service.dto.token.TokenValidationRequest;
 import ua.lastbite.token_service.dto.token.TokenValidationResponse;
-import ua.lastbite.token_service.dto.user.UserDto;
 import ua.lastbite.token_service.exception.TokenAlreadyUsedException;
 import ua.lastbite.token_service.exception.TokenExpiredException;
 import ua.lastbite.token_service.exception.TokenNotFoundException;
-import ua.lastbite.token_service.exception.UserNotFoundException;
 import ua.lastbite.token_service.mapper.TokenMapper;
 import ua.lastbite.token_service.model.Token;
 import ua.lastbite.token_service.repository.TokenRepository;
@@ -45,9 +42,6 @@ public class TokenServiceTest {
     @Mock
     private TokenMapper tokenMapper;
 
-    @Mock
-    private UserServiceClient userServiceClient;
-
     private Token token;
     private TokenRequest tokenRequest;
     private TokenValidationRequest tokenValidationRequest;
@@ -69,9 +63,6 @@ public class TokenServiceTest {
         Mockito.when(tokenMapper.toEntity(tokenRequest, tokenConfig.getTokenExpirationTime()))
                 .thenReturn(token);
 
-        Mockito.when(userServiceClient.getUserById(token.getUserId()))
-                        .thenReturn(new UserDto());
-
         Mockito.when(tokenRepository.save(any(Token.class))).thenReturn(token);
 
         String tokenValue = tokenService.generateToken(tokenRequest);
@@ -80,30 +71,15 @@ public class TokenServiceTest {
         assertNotNull(tokenValue);
         assertTrue(token.getExpiresAt().isAfter(LocalDateTime.now()));
 
-        Mockito.verify(userServiceClient, Mockito.times(1)).getUserById(token.getUserId());
         Mockito.verify(tokenRepository, Mockito.times(1)).save(token);
         Mockito.verify(tokenMapper, Mockito.times(1)).toEntity(tokenRequest, tokenConfig.getTokenExpirationTime());
     }
 
-    @Test
-    void testGenerateTokenUserNotFound() {
-        Mockito.doThrow(new UserNotFoundException(token.getUserId()))
-                .when(userServiceClient).getUserById(tokenRequest.getUserId());
-
-        UserNotFoundException exception  = assertThrows(UserNotFoundException.class, () -> tokenService.generateToken(tokenRequest));
-
-        assertEquals(exception.getMessage(), "User with ID 1 not found");
-        Mockito.verify(userServiceClient, Mockito.times(1)).getUserById(tokenRequest.getUserId());
-        Mockito.verify(tokenRepository, Mockito.never()).save(token);
-    }
 
     @Test
     void testGenerateUniqueTokenForSameUser() {
         Mockito.when(tokenMapper.toEntity(tokenRequest, tokenConfig.getTokenExpirationTime()))
                 .thenReturn(token);
-
-        Mockito.when(userServiceClient.getUserById(token.getUserId()))
-                .thenReturn(new UserDto());
 
         Mockito.when(tokenRepository.save(any(Token.class))).thenReturn(token);
 
