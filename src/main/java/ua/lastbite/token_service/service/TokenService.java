@@ -9,7 +9,6 @@ import ua.lastbite.token_service.config.TokenConfig;
 import ua.lastbite.token_service.dto.token.TokenRequest;
 import ua.lastbite.token_service.dto.token.TokenValidationRequest;
 import ua.lastbite.token_service.dto.token.TokenValidationResponse;
-import ua.lastbite.token_service.dto.user.UserDto;
 import ua.lastbite.token_service.exception.TokenAlreadyUsedException;
 import ua.lastbite.token_service.exception.TokenExpiredException;
 import ua.lastbite.token_service.exception.TokenNotFoundException;
@@ -29,22 +28,17 @@ public class TokenService {
     private final TokenRepository tokenRepository;
     private final TokenMapper tokenMapper;
     private final TokenConfig tokenConfig;
-    private final UserServiceClient userServiceClient;
 
     @Autowired
     public TokenService(TokenRepository tokenRepository, TokenMapper tokenMapper
-            , TokenConfig tokenConfig, UserServiceClient userServiceClient) {
+            , TokenConfig tokenConfig) {
         this.tokenRepository = tokenRepository;
         this.tokenMapper = tokenMapper;
         this.tokenConfig = tokenConfig;
-        this.userServiceClient = userServiceClient;
     }
 
     public String generateToken(TokenRequest request) {
         LOGGER.info("Generating token for user ID: {}", request.getUserId());
-
-        UserDto userDto = userServiceClient.getUserById(request.getUserId());
-        LOGGER.debug("Retrieved user data: {}", userDto);
 
         Token token = tokenMapper.toEntity(request, tokenConfig.getTokenExpirationTime());
         String tokenValue = generateTokenValue(request.getUserId());

@@ -27,7 +27,6 @@ import ua.lastbite.token_service.exception.UserNotFoundException;
 import ua.lastbite.token_service.model.Token;
 import ua.lastbite.token_service.repository.TokenRepository;
 import ua.lastbite.token_service.service.TokenService;
-import ua.lastbite.token_service.service.UserServiceClient;
 
 import java.time.LocalDateTime;
 
@@ -57,9 +56,6 @@ public class TokenControllerIntegrationTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    @MockBean
-    private UserServiceClient userServiceClient;
-
     private TokenRequest tokenRequest;
     private TokenValidationRequest tokenValidationRequest;
     private Token existingToken;
@@ -86,8 +82,6 @@ public class TokenControllerIntegrationTest {
 
     @Test
     void testGenerateTokenSuccessfully() throws Exception {
-        Mockito.when(userServiceClient.getUserById(tokenRequest.getUserId()))
-                .thenReturn(userDto);
 
         MvcResult result = mockMvc.perform(post("/api/tokens/generate")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -106,18 +100,6 @@ public class TokenControllerIntegrationTest {
         assertNotNull(savedToken.getCreatedAt());
         assertNotNull(savedToken.getExpiresAt());
         assertTrue(savedToken.getExpiresAt().isAfter(savedToken.getCreatedAt()));
-    }
-
-    @Test
-    void testGenerateTokenUserNotFound() throws Exception {
-        Mockito.when(userServiceClient.getUserById(tokenRequest.getUserId()))
-                .thenThrow(new UserNotFoundException(tokenRequest.getUserId()));
-
-        mockMvc.perform(post("/api/tokens/generate")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(tokenRequest)))
-                .andExpect(status().isNotFound())
-                .andExpect(content().string("User with ID " + tokenRequest.getUserId() + " not found"));
     }
 
     @Test
@@ -140,18 +122,6 @@ public class TokenControllerIntegrationTest {
                 .content(objectMapper.writeValueAsString(tokenRequest)))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("Request body is missing or invalid"));
-    }
-
-    @Test
-    void testGenerateTokenServiceUnavailable() throws Exception {
-        Mockito.when(userServiceClient.getUserById(tokenRequest.getUserId()))
-                .thenThrow(new ServiceUnavailableException("Failed to communicate with user-service"));
-
-        mockMvc.perform(post("/api/tokens/generate")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(tokenRequest)))
-                .andExpect(status().isServiceUnavailable())
-                .andExpect(content().string("Failed to communicate with user-service"));
     }
 
     @BeforeEach

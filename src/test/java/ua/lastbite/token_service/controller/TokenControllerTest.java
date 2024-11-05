@@ -18,15 +18,12 @@ import org.springframework.test.web.servlet.MvcResult;
 import ua.lastbite.token_service.dto.token.TokenRequest;
 import ua.lastbite.token_service.dto.token.TokenValidationRequest;
 import ua.lastbite.token_service.dto.token.TokenValidationResponse;
-import ua.lastbite.token_service.dto.user.UserDto;
 import ua.lastbite.token_service.exception.TokenAlreadyUsedException;
 import ua.lastbite.token_service.exception.TokenExpiredException;
 import ua.lastbite.token_service.exception.TokenNotFoundException;
-import ua.lastbite.token_service.exception.UserNotFoundException;
 import ua.lastbite.token_service.model.Token;
 import ua.lastbite.token_service.repository.TokenRepository;
 import ua.lastbite.token_service.service.TokenService;
-import ua.lastbite.token_service.service.UserServiceClient;
 
 import java.time.LocalDateTime;
 
@@ -47,9 +44,6 @@ public class TokenControllerTest {
 
     @MockBean
     private TokenService tokenService;
-
-    @MockBean
-    private UserServiceClient userServiceClient;
 
     @Autowired
     private TokenRepository tokenRepository;
@@ -75,8 +69,6 @@ public class TokenControllerTest {
 
     @Test
     void testGenerateTokenSuccessfully() throws Exception {
-        Mockito.when(userServiceClient.getUserById(tokenRequest.getUserId()))
-                        .thenReturn(new UserDto());
 
         Mockito.when(tokenService.generateToken(tokenRequest))
                 .thenReturn("TokenSample");
@@ -91,18 +83,6 @@ public class TokenControllerTest {
 
         String responseContent = result.getResponse().getContentAsString();
         assertEquals("TokenSample", responseContent);
-    }
-
-    @Test
-    void testGenerateTokenUserNotFound() throws Exception {
-        Mockito.doThrow(new UserNotFoundException(1))
-                        .when(tokenService).generateToken(tokenRequest);
-
-        mockMvc.perform(post("/api/tokens/generate")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(tokenRequest)))
-                .andExpect(status().isNotFound())
-                .andExpect(content().string("User with ID 1 not found"));
     }
 
     @Test
