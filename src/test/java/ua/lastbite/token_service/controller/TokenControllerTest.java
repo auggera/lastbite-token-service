@@ -69,7 +69,7 @@ class TokenControllerTest {
         Mockito.when(tokenService.generateToken(tokenRequest))
                 .thenReturn(tokenResponse);
 
-        MvcResult result = mockMvc.perform(post("/api/tokens/generate")
+        MvcResult result = mockMvc.perform(post("/api/tokens")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(tokenRequest)))
                 .andExpect(status().isOk())

@@ -68,7 +68,7 @@ class TokenControllerIntegrationTest {
     @Test
     void testGenerateTokenSuccessfully() throws Exception {
 
-        MvcResult result = mockMvc.perform(post("/api/tokens/generate")
+        MvcResult result = mockMvc.perform(post("/api/tokens")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(tokenRequest)))
                 .andExpect(status().isOk())
@@ -93,7 +93,7 @@ class TokenControllerIntegrationTest {
     void testGenerateTokenUserIdIsNull() throws Exception {
         tokenRequest.setUserId(null);
 
-        mockMvc.perform(post("/api/tokens/generate")
+        mockMvc.perform(post("/api/tokens")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(tokenRequest)))
                 .andExpect(status().isBadRequest())
@@ -104,7 +104,7 @@ class TokenControllerIntegrationTest {
     void testGenerateTokenRequestIsNull() throws Exception {
         tokenRequest = null;
 
-        mockMvc.perform(post("/api/tokens/generate")
+        mockMvc.perform(post("/api/tokens")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(tokenRequest)))
                 .andExpect(status().isBadRequest())

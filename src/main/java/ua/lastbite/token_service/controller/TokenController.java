@@ -22,9 +22,9 @@ public class TokenController {
         this.tokenService = tokenService;
     }
 
-    @PostMapping("/generate")
+    @PostMapping()
     public ResponseEntity<TokenResponse> generateToken(@Valid @RequestBody TokenRequest request) {
-        log.info("Received request to generate token for user ID: {}", request.getUserId());
+        log.info("Request received: POST /api/tokens - generate token for user ID: {}", request.getUserId());
         TokenResponse tokenResponse = tokenService.generateToken(request);
         log.info("Token successfully generated for user ID: {}", request.getUserId());
         return ResponseEntity.ok(tokenResponse);
@@ -32,7 +32,7 @@ public class TokenController {
 
     @PostMapping("/validate/{token}")
     public ResponseEntity<TokenValidationResponse> validateToken(@PathVariable("token") String token) {
-        log.info("Received request to validate token: {}", token);
+        log.info("Request received: POST /api/tokens - validate token: {}", token);
         TokenValidationResponse response = tokenService.validateToken(token);
         log.info("Token validation result for token {}: {}", token, response.isValid());
         return ResponseEntity.ok(response);
