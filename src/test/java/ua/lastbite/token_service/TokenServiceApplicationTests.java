@@ -10,6 +10,7 @@ class TokenServiceApplicationTests {
 
 	@Test
 	void contextLoads() {
+		// blank
 	}
 
 }

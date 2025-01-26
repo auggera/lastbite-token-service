@@ -7,13 +7,13 @@ import ua.lastbite.token_service.model.Token;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class TokenMapperTest {
+class TokenMapperTest {
 
     private final TokenMapper tokenMapper = Mappers.getMapper(TokenMapper.class);
 
     @Test
-    public void testTokenMapper() {
-        TokenRequest tokenRequest = new TokenRequest(1);
+    void testTokenMapper() {
+        TokenRequest tokenRequest = new TokenRequest(1L);
 
         Token token = tokenMapper.toEntity(tokenRequest, 86_400L);
 

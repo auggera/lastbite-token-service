@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import ua.lastbite.token_service.config.TokenConfig;
 import ua.lastbite.token_service.dto.token.TokenRequest;
 import ua.lastbite.token_service.dto.token.TokenResponse;
-import ua.lastbite.token_service.dto.token.TokenValidationRequest;
 import ua.lastbite.token_service.dto.token.TokenValidationResponse;
 import ua.lastbite.token_service.exception.TokenAlreadyUsedException;
 import ua.lastbite.token_service.exception.TokenExpiredException;
@@ -52,25 +51,25 @@ public class TokenService {
         return new TokenResponse(tokenValue);
     }
 
-    private String generateTokenValue(Integer userId) {
+    private String generateTokenValue(Long userId) {
         return Base64.getEncoder()
                 .encodeToString((userId + ":" + UUID.randomUUID()).getBytes());
     }
 
-    public TokenValidationResponse validateToken(TokenValidationRequest request) {
-        LOGGER.info("Validating token: {}", request.getTokenValue());
+    public TokenValidationResponse validateToken(String tokenValue) {
+        LOGGER.info("Validating token: {}", tokenValue);
 
-        Token token = tokenRepository.findByTokenValue(request.getTokenValue())
-                .orElseThrow(() -> new TokenNotFoundException(request.getTokenValue()));
+        Token token = tokenRepository.findByTokenValue(tokenValue)
+                .orElseThrow(() -> new TokenNotFoundException(tokenValue));
 
         if (isTokenExpired(token)) {
             LOGGER.error("Token is expired: {}", token.getTokenValue());
-            throw new TokenExpiredException(request.getTokenValue());
+            throw new TokenExpiredException(tokenValue);
         }
 
         if (token.isUsed()) {
             LOGGER.error("Token is used: {}", token.getTokenValue());
-            throw new TokenAlreadyUsedException(request.getTokenValue());
+            throw new TokenAlreadyUsedException(tokenValue);
         }
 
         LOGGER.info("Token is valid. User ID: {}", token.getUserId());
