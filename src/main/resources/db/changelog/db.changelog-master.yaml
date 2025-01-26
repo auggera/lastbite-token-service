@@ -20,7 +20,7 @@ databaseChangeLog:
                     nullable: false
               - column:
                   name: user_id
-                  type: int
+                  type: BIGINT
                   constraints:
                     nullable: false
               - column:

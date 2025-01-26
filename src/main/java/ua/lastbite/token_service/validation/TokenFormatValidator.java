@@ -11,7 +11,7 @@ public class TokenFormatValidator implements ConstraintValidator<ValidTokenForma
     public boolean isValid(String tokenValue, ConstraintValidatorContext context) {
         if (tokenValue == null || tokenValue.trim().isEmpty()) {
             return true; // Let @NotBlank handle the case
-        };
+        }
 
         return tokenValue.matches(TOKEN_REGEX);
     }
