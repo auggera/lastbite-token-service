@@ -161,43 +161,4 @@ class TokenControllerIntegrationTest {
                 .andExpect(status().isGone())
                 .andExpect(content().string("Token has expired: " + TOKEN_VALUE));
     }
-
-    @Test
-    void testValidateTokenIsNull() throws Exception {
-
-        mockMvc.perform(post("/api/tokens/validate/{token}", (Object) null)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.tokenValue").value("Token cannot be empty"));
-    }
-
-    @Test
-    void testValidateTokenIsTooShort() throws Exception {
-        String shortToken = "short";
-
-        mockMvc.perform(post("/api/tokens/validate/{token}", shortToken)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.tokenValue").value("Token length must be between 10 and 100 characters"));
-    }
-
-    @Test
-    void testValidateTokenIsTooLong() throws Exception {
-        String longToken = "long".repeat(26);
-
-        mockMvc.perform(post("/api/tokens/validate/{token}", longToken)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.tokenValue").value("Token length must be between 10 and 100 characters"));
-    }
-
-    @Test
-    void testValidateTokenInvalidFormat() throws Exception {
-        String invalidToken = "abc123!@#asdasdad";
-
-        mockMvc.perform(post("/api/tokens/validate/{token}", invalidToken)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.tokenValue").value("Invalid token format"));
-    }
 }

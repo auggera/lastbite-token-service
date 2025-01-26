@@ -52,7 +52,7 @@ class TokenControllerTest {
     @BeforeEach
     void setUp() {
         tokenRequest = new TokenRequest(1L);
-        tokenValidationResponse = new TokenValidationResponse(true, 1);
+        tokenValidationResponse = new TokenValidationResponse(true, 1L);
         tokenResponse = new TokenResponse(TOKEN_VALUE);
 
         Token token = new Token();
@@ -106,7 +106,7 @@ class TokenControllerTest {
         Mockito.when(tokenService.validateToken(TOKEN_VALUE))
                 .thenThrow(new TokenExpiredException(TOKEN_VALUE));
 
-        mockMvc.perform(post("/api/tokens/validate")
+        mockMvc.perform(post("/api/tokens/validate/{token}", TOKEN_VALUE)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isGone())
                 .andExpect(content().string("Token has expired: " + TOKEN_VALUE));

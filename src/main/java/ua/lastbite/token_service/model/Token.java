@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Getter
 @Entity
 @EqualsAndHashCode
-@Table(name = "token")
+@Table(name = "tokens")
 public class Token {
 
     @Id
