@@ -1,5 +1,6 @@
 package ua.lastbite.token_service.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +10,7 @@ import ua.lastbite.token_service.config.TokenConfig;
 import ua.lastbite.token_service.dto.token.TokenRequest;
 import ua.lastbite.token_service.dto.token.TokenResponse;
 import ua.lastbite.token_service.dto.token.TokenValidationResponse;
+import ua.lastbite.token_service.exception.InvalidTokenFormatException;
 import ua.lastbite.token_service.exception.TokenAlreadyUsedException;
 import ua.lastbite.token_service.exception.TokenExpiredException;
 import ua.lastbite.token_service.exception.TokenNotFoundException;
@@ -21,9 +23,8 @@ import java.util.Base64;
 import java.util.UUID;
 
 @Service
+@Slf4j
 public class TokenService {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(TokenService.class);
 
     private final TokenRepository tokenRepository;
     private final TokenMapper tokenMapper;
@@ -38,15 +39,15 @@ public class TokenService {
     }
 
     public TokenResponse generateToken(TokenRequest request) {
-        LOGGER.info("Generating token for user ID: {}", request.getUserId());
+        log.info("Generating token for user ID: {}", request.getUserId());
 
         Token token = tokenMapper.toEntity(request, tokenConfig.getTokenExpirationTime());
         String tokenValue = generateTokenValue(request.getUserId());
         token.setTokenValue(tokenValue);
 
-        LOGGER.info("Token successfully generated for user ID: {}", request.getUserId());
+        log.info("Token successfully generated for user ID: {}", request.getUserId());
         tokenRepository.save(token);
-        LOGGER.info("Token saved");
+        log.info("Token saved");
 
         return new TokenResponse(tokenValue);
     }
@@ -57,22 +58,32 @@ public class TokenService {
     }
 
     public TokenValidationResponse validateToken(String tokenValue) {
-        LOGGER.info("Validating token: {}", tokenValue);
+        log.info("Validating token: {}", tokenValue);
+
+        if (tokenValue == null || tokenValue.isBlank()) {
+            log.error("Validation failed: token is blank or null.");
+            throw new InvalidTokenFormatException("Token cannot be null or empty");
+        }
+
+        if (!isValidTokenFormat(tokenValue)) {
+            log.error("Validation failed: token has invalid format. Token: {}", tokenValue);
+            throw new InvalidTokenFormatException("Token format is invalid");
+        }
 
         Token token = tokenRepository.findByTokenValue(tokenValue)
                 .orElseThrow(() -> new TokenNotFoundException(tokenValue));
 
         if (isTokenExpired(token)) {
-            LOGGER.error("Token is expired: {}", token.getTokenValue());
+            log.error("Token is expired: {}", token.getTokenValue());
             throw new TokenExpiredException(tokenValue);
         }
 
         if (token.isUsed()) {
-            LOGGER.error("Token is used: {}", token.getTokenValue());
+            log.error("Token is used: {}", token.getTokenValue());
             throw new TokenAlreadyUsedException(tokenValue);
         }
 
-        LOGGER.info("Token is valid. User ID: {}", token.getUserId());
+        log.info("Token is valid. User ID: {}", token.getUserId());
         markTokenAsUsed(token);
 
         return new TokenValidationResponse(true, token.getUserId());
@@ -83,15 +94,20 @@ public class TokenService {
     }
 
     private void markTokenAsUsed(Token token) {
-        LOGGER.info("Marking token as used: {}", token.getTokenValue());
+        log.info("Marking token as used: {}", token.getTokenValue());
         token.setUsed(true);
         tokenRepository.save(token);
     }
 
     @Scheduled(cron = "0 0 0 * * ?") //Starts every day at midnight
     public void removeExpiredAndUsedTokens() {
-        LOGGER.info("Starting cleanup of expired and used tokens");
+        log.info("Starting cleanup of expired and used tokens");
         int deletedTokens = tokenRepository.deleteExpiredOrUsedTokens();
-        LOGGER.info("Completed cleanup. Number of deleted tokens: {}", deletedTokens);
+        log.info("Completed cleanup. Number of deleted tokens: {}", deletedTokens);
+    }
+
+    private boolean isValidTokenFormat(String token) {
+        String regex = "^[A-Za-z0-9+/]+={0,2}$";
+        return token.matches(regex);
     }
 }
