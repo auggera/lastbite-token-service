@@ -15,8 +15,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import ua.lastbite.token_service.dto.token.TokenRequest;
 import ua.lastbite.token_service.dto.token.TokenResponse;
-import ua.lastbite.token_service.dto.user.UserDto;
-import ua.lastbite.token_service.dto.user.UserRole;
 import ua.lastbite.token_service.exception.TokenNotFoundException;
 import ua.lastbite.token_service.model.Token;
 import ua.lastbite.token_service.repository.TokenRepository;
@@ -51,18 +49,11 @@ class TokenControllerIntegrationTest {
     @BeforeEach
     void setUpRequest() {
         tokenRequest = new TokenRequest(1L);
-
-        UserDto userDto = new UserDto();
-        userDto.setId(1);
-        userDto.setFirstName("John");
-        userDto.setLastName("Doe");
-        userDto.setEmail("john@example.com");
-        userDto.setRole(UserRole.CUSTOMER);
     }
 
     @BeforeEach
     public void cleanDatabase() {
-        jdbcTemplate.execute("TRUNCATE TABLE token RESTART IDENTITY");
+        jdbcTemplate.execute("TRUNCATE TABLE tokens RESTART IDENTITY");
     }
 
     @Test
