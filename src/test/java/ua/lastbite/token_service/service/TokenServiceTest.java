@@ -12,7 +12,6 @@ import org.springframework.test.context.ActiveProfiles;
 import ua.lastbite.token_service.config.TokenConfig;
 import ua.lastbite.token_service.dto.token.TokenRequest;
 import ua.lastbite.token_service.dto.token.TokenResponse;
-import ua.lastbite.token_service.dto.token.TokenValidationRequest;
 import ua.lastbite.token_service.dto.token.TokenValidationResponse;
 import ua.lastbite.token_service.exception.TokenAlreadyUsedException;
 import ua.lastbite.token_service.exception.TokenExpiredException;
@@ -29,7 +28,7 @@ import static org.mockito.ArgumentMatchers.any;
 
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
-public class TokenServiceTest {
+class TokenServiceTest {
 
     @Mock
     private TokenRepository tokenRepository;
@@ -43,20 +42,19 @@ public class TokenServiceTest {
     @Mock
     private TokenMapper tokenMapper;
 
+    private static final String TOKEN_VALUE = "testToken123";
     private Token token;
     private TokenRequest tokenRequest;
-    private TokenValidationRequest tokenValidationRequest;
 
     @BeforeEach
     void setUp() {
         token = new Token();
         token.setTokenValue("testToken");
-        token.setUserId(1);
+        token.setUserId(1L);
         token.setExpiresAt(LocalDateTime.now().plusSeconds(86_400L));
         token.setUsed(false);
 
-        tokenRequest = new TokenRequest(1);
-        tokenValidationRequest = new TokenValidationRequest("testToken");
+        tokenRequest = new TokenRequest(1L);
     }
 
     @Test
@@ -97,10 +95,10 @@ public class TokenServiceTest {
 
     @Test
     void testValidateTokenSuccessfully() {
-        Mockito.when(tokenRepository.findByTokenValue(tokenValidationRequest.getTokenValue()))
+        Mockito.when(tokenRepository.findByTokenValue(TOKEN_VALUE))
                 .thenReturn(Optional.of(token));
 
-        TokenValidationResponse response = tokenService.validateToken(tokenValidationRequest);
+        TokenValidationResponse response = tokenService.validateToken(TOKEN_VALUE);
 
         assertTrue(response.isValid());
         assertEquals(1, response.getUserId());
@@ -111,12 +109,12 @@ public class TokenServiceTest {
 
     @Test
     void testValidateTokenNotFound() {
-        Mockito.when(tokenRepository.findByTokenValue(tokenValidationRequest.getTokenValue()))
+        Mockito.when(tokenRepository.findByTokenValue(TOKEN_VALUE))
                 .thenReturn(Optional.empty());
 
-        TokenNotFoundException exception = assertThrows(TokenNotFoundException.class, () -> tokenService.validateToken(tokenValidationRequest));
+        TokenNotFoundException exception = assertThrows(TokenNotFoundException.class, () -> tokenService.validateToken(TOKEN_VALUE));
 
-        assertEquals("Token not found: " + tokenValidationRequest.getTokenValue(), exception.getMessage());
+        assertEquals("Token not found: " + TOKEN_VALUE, exception.getMessage());
         Mockito.verify(tokenRepository, Mockito.never()).save(token);
     }
 
@@ -125,12 +123,12 @@ public class TokenServiceTest {
         token.setCreatedAt(LocalDateTime.now().minusSeconds(86_401L));
         token.setExpiresAt(token.getCreatedAt().plusSeconds(86_400L));
 
-        Mockito.when(tokenRepository.findByTokenValue(tokenValidationRequest.getTokenValue()))
+        Mockito.when(tokenRepository.findByTokenValue(TOKEN_VALUE))
                 .thenReturn(Optional.of(token));
 
-        TokenExpiredException exception = assertThrows(TokenExpiredException.class, () -> tokenService.validateToken(tokenValidationRequest));
+        TokenExpiredException exception = assertThrows(TokenExpiredException.class, () -> tokenService.validateToken(TOKEN_VALUE));
 
-        assertEquals("Token has expired: " + token.getTokenValue(), exception.getMessage());
+        assertEquals("Token has expired: " + TOKEN_VALUE, exception.getMessage());
 
         Mockito.verify(tokenRepository, Mockito.never()).save(token);
     }
@@ -139,12 +137,12 @@ public class TokenServiceTest {
     void testValidateTokenIsAlreadyUsed() {
         token.setUsed(true);
 
-        Mockito.when(tokenRepository.findByTokenValue(tokenValidationRequest.getTokenValue()))
+        Mockito.when(tokenRepository.findByTokenValue(TOKEN_VALUE))
                 .thenReturn(Optional.of(token));
 
-        TokenAlreadyUsedException exception = assertThrows(TokenAlreadyUsedException.class, () -> tokenService.validateToken(tokenValidationRequest));
+        TokenAlreadyUsedException exception = assertThrows(TokenAlreadyUsedException.class, () -> tokenService.validateToken(TOKEN_VALUE));
 
-        assertEquals("Token has already been used: " + token.getTokenValue(), exception.getMessage());
+        assertEquals("Token has already been used: " + TOKEN_VALUE, exception.getMessage());
 
         Mockito.verify(tokenRepository, Mockito.never()).save(token);
     }

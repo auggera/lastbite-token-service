@@ -4,7 +4,7 @@ databaseChangeLog:
       author: Augustin
       changes:
         - createTable:
-            tableName: token
+            tableName: tokens
             columns:
               - column:
                   name: id
@@ -20,7 +20,7 @@ databaseChangeLog:
                     nullable: false
               - column:
                   name: user_id
-                  type: int
+                  type: BIGINT
                   constraints:
                     nullable: false
               - column:
