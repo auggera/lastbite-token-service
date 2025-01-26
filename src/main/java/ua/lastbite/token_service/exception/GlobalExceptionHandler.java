@@ -43,6 +43,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.GONE).body(ex.getMessage());
     }
 
+    @ExceptionHandler(InvalidTokenFormatException.class)
+    public ResponseEntity<String> handleInvalidTokenFormat(InvalidTokenFormatException ex) {
+        log.warn("Handled InvalidTokenFormatException: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    }
+
     @ExceptionHandler(ServiceUnavailableException.class)
     public ResponseEntity<String> handleServiceUnavailable(ServiceUnavailableException ex) {
         log.warn("Handled ServiceUnavailableException: {}", ex.getMessage());
